@@ -1,5 +1,4 @@
 import threading
-import _thread
 import time
 import RPi.GPIO as GPIO
 from adcConvert import adcMonitor as ad
@@ -9,10 +8,9 @@ from keyConsole import keyCtl as k
 from w1thermsensor import W1ThermSensor
 #for BLE fucntion using bluepy
 from bluepy import btle
-from bluepy.btle import Scanner, DefaultDelegate
-import time
+from bluepy.btle import Scanner, DefaultDelegate, BTLEException
 
-MAIN_VER ="MAIN-R0.8"
+MAIN_VER ="MAIN-R0.9"
 global adcArray,adc2Voltage
 adcArray = []
 chVolt = []
@@ -76,9 +74,9 @@ class myThread (threading.Thread):
         self.counter = counter
         k.key_cb_enable(2,k.keyList)
     def run(self):
-        print ("开始线程：" + self.name)
+        print("Starting to run :"+ self.name)
         adcMonitorTask(self.name, self.counter, 5)
-        print ("退出线程：" + self.name)
+        print("Exiting from run:"+ self.name)
     def stop(self):
         self.thread_stop = True
         print (" thread1-stop :%s" %self.thread_stop)
@@ -117,6 +115,16 @@ def adcMonitorTask(threadName, delay, counter):
     counter -= 1
 
 ### define for BLE portion
+# Scan Delegate...
+class ScanDelegate(DefaultDelegate):
+    def __init__(self):
+        DefaultDelegate.__init__(self)
+
+    def handleDiscovery(self, dev, isNewDev, isNewData):
+        if isNewDev:
+            print ("Discovered device", dev.addr)
+        elif isNewData:
+            print ("Received new data from", dev.addr)
 
 #####Entry point here
 if __name__ == '__main__':
@@ -133,6 +141,14 @@ for ch in range (4):
   print("Volt of channel%s is :%05.3f"%(ch,chVolt[ch]))
 
 #BLE portion
+print ('Scanning...')
+scanner = Scanner().withDelegate(ScanDelegate())
+devices = scanner.scan(10.0)
+for dev in devices:
+    print ("Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi) )
+    for (adtype, desc, value) in dev.getScanData():
+        print ("  %s = %s" % (desc, value))
+
 
 #temperature sensor DS18B20 test
 GPIO.setup(TEMP_GPIO,GPIO.IN,GPIO.PUD_UP)

@@ -1,1 +1,1 @@
-
+#from KEYCTL import hwcmd
