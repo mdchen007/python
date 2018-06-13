@@ -1,7 +1,8 @@
 
 import RPi.GPIO as GPIO
 import time
-import queue
+#import queue
+from queue import Queue
 from .KEYCTL.hwcmd import key_init
 #from KEYCTL import hwcmd as h
 GPIO.setmode(GPIO.BCM)
@@ -11,7 +12,8 @@ GPIO23 =23
 #keyList [GPIO NO.][callbackFunc]
 global keyList,keystate,kq
 keystate =5
-kq = queue.Queue()
+#kq = queue.Queue()
+kq = Queue()
 
 def toggle_func(callback):
     keystate = 1

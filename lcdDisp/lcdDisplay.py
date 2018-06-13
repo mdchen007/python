@@ -22,6 +22,7 @@ LCD_PAGE_TOG =2
 # disp_page_now =1 means page1, =2 page2,default page1
 LCD_P1 =1
 LCD_P2 =2
+LCD_NOW_PAGE =3
 disp_page_now =LCD_P1
 
 #This is a page initialation. It is provide 2 field one line each ,total 4 fields.
@@ -49,8 +50,9 @@ def page_init(nop,TL,TR,BL,BR):
   print('page'+str(nop))
 
 #print a string via defined address
+# page =1 , 2 or LCD_NOW_PAGE
 def print_string(page,string,location):
-  if (page == 1):
+  if (page == LCD_P1 or (page ==LCD_NOW_PAGE and disp_page_now ==LCD_P1)):
     if (location == 0):
       h.cur_seek(1,TL_PAGE1)
     elif (location == 1):
@@ -61,7 +63,7 @@ def print_string(page,string,location):
       h.cur_seek(2,BR_PAGE1)
     else :
       string =LCD_ERROR
-  elif(page == 2):
+  elif(page == LCD_P2 or (page ==LCD_NOW_PAGE and disp_page_now ==LCD_P2)):
     if (location == 0):
       h.cur_seek(1,TL_PAGE2)
     elif (location == 1):
@@ -71,7 +73,7 @@ def print_string(page,string,location):
     elif (location == 3):
       h.cur_seek(2,BR_PAGE2)
     else :
-      pass
+      string =LCD_ERROR
   else :
       string =LCD_ERROR
   h.print_msg(string)

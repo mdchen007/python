@@ -4,13 +4,15 @@ import RPi.GPIO as GPIO
 from adcConvert import adcMonitor as ad
 from lcdDisp import lcdDisplay as lcd
 from keyConsole import keyCtl as k
+
 #one wire for DS18b20 temperature sensor
 from w1thermsensor import W1ThermSensor
-#for BLE fucntion using bluepy
-from bluepy import btle
-from bluepy.btle import Scanner, DefaultDelegate, BTLEException
 
-MAIN_VER ="MAIN-R0.9"
+#for BLE fucntion using bluepy
+#from bluepy.bluepy import btle as bt
+from bluepy.bluepy.btle import Scanner, DefaultDelegate, BTLEException
+
+MAIN_VER ="MAIN-R0.10"
 global adcArray,adc2Voltage
 adcArray = []
 chVolt = []
@@ -99,6 +101,7 @@ def adcMonitorTask(threadName, delay, counter):
     try :
       temperature = sensor.get_temperature()
       lcd.print_string(lcd.LCD_P2,(str(temperature)[:5]),2)
+      lcd.print_string(lcd.LCD_NOW_PAGE,(str(counter)[:3]+'    '),1)
       print("The temperature is %s celsius" % temperature)
     except:
       print("Check GPIO-BCM4 which is pulled up or not")
@@ -152,16 +155,19 @@ for dev in devices:
 
 #temperature sensor DS18B20 test
 GPIO.setup(TEMP_GPIO,GPIO.IN,GPIO.PUD_UP)
-sensor_temp =1
-while(sensor_temp):
+sensor_temp_init =0
+counter =10
+while( not sensor_temp_init or counter !=0 ):
   try :
     sensor = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20,"041702b228ff")
     temperature = sensor.get_temperature()
     print("The temperature is %s celsius" % temperature)
-    sensor_temp=0
+    sensor_temp_init=1
+    counter =0
   except:
-    print("Check pin-BCM4 that is pulled up or not, wait for a minutes")
+    print("Check pin-BCM4 that is pulled up or not, wait for a minutes %s" %counter)
     time.sleep(1)
+    counter-= 1
 
 
 #thread init
