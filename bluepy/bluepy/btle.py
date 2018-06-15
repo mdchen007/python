@@ -16,7 +16,7 @@ def preexec_function():
     # Ignore the SIGINT signal by setting the handler to the standard
     # signal handler SIG_IGN.
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-# chagned to True by Jerry Chen,06/12/2018
+
 Debugging = False
 script_path = os.path.join(os.path.abspath(os.path.dirname(__file__)))
 helperExe = os.path.join(script_path, "bluepy-helper")

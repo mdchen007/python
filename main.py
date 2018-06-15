@@ -16,8 +16,8 @@ global adcArray,adc2Voltage
 adcArray = []
 chVolt = []
 exitFlag = 0
-PAGEKEY =17
-EXITKEY =23
+PAGEKEY = 17
+EXITKEY = 23
 PAGE1TOPLEFT ='PV(5V)'
 PAGE1TOPRIGHT ='RPI3.3V'
 PAGE2TOPLEFT ='Temp(C)'
@@ -164,9 +164,8 @@ def main():
   for ch in range (4):
     chVolt[ch] = volConv(ad.getChVal(ch))
     print("Volt of channel%s is :%05.3f"%(ch,chVolt[ch]))
-
-  #BLE portion
-  #ble_init()
+#BLE portion
+  ble_init()
 
   #temperature sensor DS18B20 init
   GPIO.setup(TEMP_GPIO,GPIO.IN,GPIO.PUD_UP)
