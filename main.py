@@ -25,6 +25,7 @@ PAGE2TOPRIGHT ='CH0'
 LCDPAGE1=1
 LCDPAGE2=2
 TEMP_GPIO = 4
+BLE1_MAC_ADDR ="DB:4C:AF:AB:A7:EC"
 
 loc_naming =[PAGE1TOPLEFT,PAGE1TOPRIGHT,PAGE2TOPLEFT,PAGE2TOPRIGHT]
 
@@ -140,7 +141,7 @@ def ble_init():
         print ("  %s = %s" % (desc, value))
   print ('Querying...')
   try:
-    p = Peripheral("DB:4C:AF:AB:A7:EC", "random",0)
+    p = Peripheral(BLE1_MAC_ADDR, "random",0)
   except:
     print("Check device on or does it throw an BTLEException exception from BLE constructor? ")
 
@@ -151,23 +152,8 @@ def ble_init():
     print("getCharacteristics Error")
   #print (c.read())
 
-#####main function here
-def main():
-  print(MAIN_VER)
-  #hook callback function for key event
-  keycallback_config()
-  #array init for ADC sample and hold
-  for i in range (4):
-    adcArray.append(i)
-    chVolt.append(i)
-  #get each channel value and convert to voltage
-  for ch in range (4):
-    chVolt[ch] = volConv(ad.getChVal(ch))
-    print("Volt of channel%s is :%05.3f"%(ch,chVolt[ch]))
-#BLE portion
-  ble_init()
-
-  #temperature sensor DS18B20 init
+#One wire DS I/F initialiation for ds18b20
+def ds18b20_init():
   GPIO.setup(TEMP_GPIO,GPIO.IN,GPIO.PUD_UP)
   sensor_temp_init =0
   counter =10
@@ -183,6 +169,28 @@ def main():
       time.sleep(1)
       counter-= 1
 
+#adc channel init
+def adc_chan_init():
+  for i in range (4):
+    adcArray.append(i)
+    chVolt.append(i)
+  #get each channel value and convert to voltage
+  for ch in range (4):
+    chVolt[ch] = volConv(ad.getChVal(ch))
+    print("Volt of channel%s is :%05.3f"%(ch,chVolt[ch]))
+
+#####main function declare#####
+def main():
+  print(MAIN_VER)
+  #hook callback function for key event
+  keycallback_config()
+  #adc channel init
+  adc_chan_init()
+  #BLE portion
+  ble_init()
+
+  #temperature sensor DS18B20 init
+  ds18b20_init()
   #LCD display init
   disp_init(3)
   lcd.two_page_disp()
@@ -196,6 +204,6 @@ def main():
     print("Error: unable to start thread")
   thread1.join()
 
-#####Entry point here
+#####Entry point here #####
 if __name__ == '__main__':
   main()
