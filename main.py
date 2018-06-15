@@ -98,12 +98,11 @@ def adcMonitorTask(threadName, delay, counter):
     lcd.print_string(lcd.LCD_P2,(str(chVolt[1])[:5]),3)
     #lcd.print_string(lcd.LCD_P2,(str(chVolt[0])[:5]),2)
     try :
+      sensor = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20,"041702b228ff")
       temperature = sensor.get_temperature()
-      temperature =24
       lcd.print_string(lcd.LCD_P2,(str(temperature)[:5]),2)
       lcd.print_string(lcd.LCD_NOW_PAGE,'CNTR:'+"{:0>3d}".format(counter),1)
-     # print("The temperature is %s celsius" % temperature)
-      print("No exception")
+      print("The temperature is %s celsius" % temperature)
     except:
       print("Check GPIO-BCM4 which is pulled up or not")
 
