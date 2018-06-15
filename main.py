@@ -9,10 +9,9 @@ from keyConsole import keyCtl as k
 from w1thermsensor import W1ThermSensor
 
 #for BLE fucntion using bluepy
-#from bluepy.bluepy import btle as bt
-from bluepy.bluepy.btle import Scanner, DefaultDelegate, BTLEException
+from bluepy.bluepy.btle import Scanner, DefaultDelegate, BTLEException,Peripheral
 
-MAIN_VER ="MAIN-R0.10"
+MAIN_VER ="MAIN-R0.11"
 global adcArray,adc2Voltage
 adcArray = []
 chVolt = []
@@ -41,7 +40,7 @@ def adcMonitor():
     chVolt[ch] = volConv(adcArray[ch])
 
 #config =1 means page1 init, =2 means page2 init , =3 means both init
-def page_init(config):
+def disp_init(config):
   if (config ==1 or config ==3):
     lcd.page_init(lcd.LCD_P1,loc_naming[0],loc_naming[1],(str(chVolt[2])[:5])+'v',(str(chVolt[3])[:5])+'v')
   if (config ==2 or config ==3):
@@ -100,9 +99,11 @@ def adcMonitorTask(threadName, delay, counter):
     #lcd.print_string(lcd.LCD_P2,(str(chVolt[0])[:5]),2)
     try :
       temperature = sensor.get_temperature()
+      temperature =24
       lcd.print_string(lcd.LCD_P2,(str(temperature)[:5]),2)
-      lcd.print_string(lcd.LCD_NOW_PAGE,(str(counter)[:3]+'    '),1)
-      print("The temperature is %s celsius" % temperature)
+      lcd.print_string(lcd.LCD_NOW_PAGE,'CNTR:'+"{:0>3d}".format(counter),1)
+     # print("The temperature is %s celsius" % temperature)
+      print("No exception")
     except:
       print("Check GPIO-BCM4 which is pulled up or not")
 
@@ -129,57 +130,74 @@ class ScanDelegate(DefaultDelegate):
         elif isNewData:
             print ("Received new data from", dev.addr)
 
-#####Entry point here
-if __name__ == '__main__':
-  print(MAIN_VER)
-keycallback_config()
-
-#array init
-for i in range (4):
-  adcArray.append(i)
-  chVolt.append(i)
-#get each channel value and convert to voltage
-for ch in range (4):
-  chVolt[ch] = volConv(ad.getChVal(ch))
-  print("Volt of channel%s is :%05.3f"%(ch,chVolt[ch]))
-
-#BLE portion
-print ('Scanning...')
-scanner = Scanner().withDelegate(ScanDelegate())
-devices = scanner.scan(10.0)
-for dev in devices:
+### BLE function
+def ble_init():
+  print ('Scanning...')
+  scanner = Scanner().withDelegate(ScanDelegate())
+  devices = scanner.scan(10.0)
+  for dev in devices:
     print ("Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi) )
     for (adtype, desc, value) in dev.getScanData():
         print ("  %s = %s" % (desc, value))
-
-
-#temperature sensor DS18B20 test
-GPIO.setup(TEMP_GPIO,GPIO.IN,GPIO.PUD_UP)
-sensor_temp_init =0
-counter =10
-while( not sensor_temp_init or counter !=0 ):
-  try :
-    sensor = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20,"041702b228ff")
-    temperature = sensor.get_temperature()
-    print("The temperature is %s celsius" % temperature)
-    sensor_temp_init=1
-    counter =0
+  print ('Querying...')
+  try:
+    p = Peripheral("DB:4C:AF:AB:A7:EC", "random",0)
   except:
-    print("Check pin-BCM4 that is pulled up or not, wait for a minutes %s" %counter)
-    time.sleep(1)
-    counter-= 1
+    print("Check device on or does it throw an BTLEException exception from BLE constructor? ")
 
+  try:
+    c = p.getCharacteristics(uuid="BD6664C8941DCBA806E1AA75F7D44BAC")[0]
+    #c = p.getCharacteristics(uuid="1814")[0]
+  except:
+    print("getCharacteristics Error")
+  #print (c.read())
 
-#thread init
-thread1 = myThread(1, "Threading-1", 3)
-print (" thread1 :%s" %thread1)
+#####main function here
+def main():
+  print(MAIN_VER)
+  #hook callback function for key event
+  keycallback_config()
+  #array init for ADC sample and hold
+  for i in range (4):
+    adcArray.append(i)
+    chVolt.append(i)
+  #get each channel value and convert to voltage
+  for ch in range (4):
+    chVolt[ch] = volConv(ad.getChVal(ch))
+    print("Volt of channel%s is :%05.3f"%(ch,chVolt[ch]))
 
+  #BLE portion
+  #ble_init()
 
-page_init(3)
-lcd.two_page_disp()
-try:
-  thread1.start()
-except:
-  print("Error: unable to start thread")
-thread1.join()
+  #temperature sensor DS18B20 init
+  GPIO.setup(TEMP_GPIO,GPIO.IN,GPIO.PUD_UP)
+  sensor_temp_init =0
+  counter =10
+  while( not sensor_temp_init or counter !=0 ):
+    try :
+      sensor = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20,"041702b228ff")
+      temperature = sensor.get_temperature()
+      print("The temperature is %s celsius" % temperature)
+      sensor_temp_init=1
+      counter =0
+    except:
+      print("Check pin-BCM4 that is pulled up or not, waiting for a minutes ,%s" %counter)
+      time.sleep(1)
+      counter-= 1
 
+  #LCD display init
+  disp_init(3)
+  lcd.two_page_disp()
+
+  #thread init
+  thread1 = myThread(1, "Threading-1", 3)
+  print (" thread1 :%s" %thread1)
+  try:
+    thread1.start()
+  except:
+    print("Error: unable to start thread")
+  thread1.join()
+
+#####Entry point here
+if __name__ == '__main__':
+  main()
