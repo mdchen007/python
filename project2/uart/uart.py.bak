@@ -1,0 +1,57 @@
+# -*- coding: utf-8 -*-
+import serial
+import time
+UART_VER = "UART-R0.01"
+PWM_DEVICE = "XY-LPWM"
+
+def uart_init(device):
+    if device == PWM_DEVICE:
+        ser = serial.Serial(
+        port ='/dev/ttyS0',
+        baudrate =9600,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        bytesize=serial.EIGHTBITS)
+        return ser
+    else:
+        print("failed to init UART for %"%PWM_DEVICE)
+        return 0
+
+#test_string ="D020".encode('utf-8')
+def uart_set(ser,freq,duty):
+    try:
+        time.sleep(0.1)
+        ser.write(duty)
+        state = ser.readline()
+        print("Duty state :%s"%state)
+        time.sleep(0.1)
+        ser.write(freq)
+        state =ser.readline()
+        print("Frequency state : %s"%state)
+    except:
+        ser.close()
+        print("Set error")
+
+def uart_get(ser):
+    try:
+        time.sleep(0.1)
+        ser.write(b'read')
+        setting=ser.readline()
+        return setting
+        print(setting)
+    except:
+        ser.close()
+        print("Get error")
+
+def main():
+    print("UART version is %s"%UART_VER)
+    ser = uart_init(PWM_DEVICE)
+    if ser != 0:
+        uart_set(ser,b'F10.8',b'D045')
+    value1=uart_get(ser)
+    value2=uart_get(ser)
+    print("value1=%s value2=%s"%(value1,value2))
+
+#####Entry point here #####
+if __name__ == '__main__':
+  main()
